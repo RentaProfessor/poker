@@ -632,9 +632,87 @@ function updateDealButton(): void {
 
 // ── Chat ──
 function setupChat(): void {
+  const chatPanel = document.getElementById('chat-panel') as HTMLElement;
+  const chatToggle = document.getElementById('btn-chat-toggle') as HTMLButtonElement;
+  const chatClose = document.getElementById('btn-chat-close') as HTMLButtonElement;
+  const chatHeader = document.getElementById('chat-header') as HTMLElement;
   const chatInput = document.getElementById('chat-input') as HTMLInputElement;
   const btnSend = document.getElementById('btn-chat-send') as HTMLButtonElement;
 
+  // Start with chat hidden, toggle visible
+  chatPanel.classList.add('hidden');
+  chatToggle.classList.remove('hidden');
+
+  // Toggle open
+  chatToggle.addEventListener('click', () => {
+    chatPanel.classList.remove('hidden');
+    chatToggle.classList.add('hidden');
+    chatInput.focus();
+  });
+
+  // Close
+  chatClose.addEventListener('click', () => {
+    chatPanel.classList.add('hidden');
+    chatToggle.classList.remove('hidden');
+  });
+
+  // ── Drag to move ──
+  let isDragging = false;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  chatHeader.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    const rect = chatPanel.getBoundingClientRect();
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const x = e.clientX - dragOffsetX;
+    const y = e.clientY - dragOffsetY;
+    // Clamp to viewport
+    const maxX = window.innerWidth - chatPanel.offsetWidth;
+    const maxY = window.innerHeight - chatPanel.offsetHeight;
+    chatPanel.style.left = `${Math.max(0, Math.min(x, maxX))}px`;
+    chatPanel.style.top = `${Math.max(0, Math.min(y, maxY))}px`;
+    chatPanel.style.right = 'auto';
+    chatPanel.style.bottom = 'auto';
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+
+  // Touch drag support (mobile)
+  chatHeader.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    const touch = e.touches[0];
+    const rect = chatPanel.getBoundingClientRect();
+    dragOffsetX = touch.clientX - rect.left;
+    dragOffsetY = touch.clientY - rect.top;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const x = touch.clientX - dragOffsetX;
+    const y = touch.clientY - dragOffsetY;
+    const maxX = window.innerWidth - chatPanel.offsetWidth;
+    const maxY = window.innerHeight - chatPanel.offsetHeight;
+    chatPanel.style.left = `${Math.max(0, Math.min(x, maxX))}px`;
+    chatPanel.style.top = `${Math.max(0, Math.min(y, maxY))}px`;
+    chatPanel.style.right = 'auto';
+    chatPanel.style.bottom = 'auto';
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    isDragging = false;
+  });
+
+  // ── Send message ──
   const sendMessage = () => {
     const msg = chatInput.value.trim();
     if (!msg) return;

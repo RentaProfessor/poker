@@ -3,11 +3,11 @@
   position: fixed;
   bottom: 0;
   left: 0;
-  right: 260px; /* leave room for chat */
+  right: 0;
   background: rgba(0,0,0,0.85);
   border-top: 1px solid var(--border-color);
   padding: 10px 20px;
-  z-index: 70;
+  z-index: 80;
 }
 
 .action-buttons {
@@ -114,7 +114,6 @@
 
 @media (max-width: 768px) {
   .action-bar {
-    right: 0;
     padding: 8px 10px;
   }
 
