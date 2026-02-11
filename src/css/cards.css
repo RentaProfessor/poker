@@ -1,0 +1,115 @@
+/* ── Card Rendering ── */
+.card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 68px;
+  border-radius: 6px;
+  font-weight: 700;
+  position: relative;
+  transition: transform 0.3s;
+}
+
+.card-front {
+  background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  color: #000;
+}
+
+.card-back {
+  background: linear-gradient(135deg, #1a3a6b 0%, #0d2240 100%);
+  border: 2px solid #4a7ab5;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.card-back::after {
+  content: '♠';
+  font-size: 1.2rem;
+  color: rgba(255,255,255,0.15);
+}
+
+.card-rank {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.card-suit {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* Suit colors */
+.card.hearts, .card.diamonds {
+  color: #e74c3c;
+}
+
+.card.spades, .card.clubs {
+  color: #2c3e50;
+}
+
+/* Smaller cards for seats */
+.card-sm {
+  width: 36px;
+  height: 50px;
+  border-radius: 4px;
+}
+
+.card-sm .card-rank {
+  font-size: 0.7rem;
+}
+
+.card-sm .card-suit {
+  font-size: 0.8rem;
+}
+
+/* Community cards (larger) */
+.card-lg {
+  width: 56px;
+  height: 80px;
+  border-radius: 7px;
+}
+
+.card-lg .card-rank {
+  font-size: 1.1rem;
+}
+
+.card-lg .card-suit {
+  font-size: 1.2rem;
+}
+
+/* Card deal animation */
+@keyframes deal-card {
+  from {
+    transform: translate(0, -100px) scale(0.5) rotateY(180deg);
+    opacity: 0;
+  }
+  to {
+    transform: translate(0, 0) scale(1) rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+.card.dealing {
+  animation: deal-card 0.4s ease-out forwards;
+}
+
+/* Card flip */
+@keyframes card-flip {
+  0% { transform: rotateY(0deg); }
+  50% { transform: rotateY(90deg); }
+  100% { transform: rotateY(0deg); }
+}
+
+.card.flipping {
+  animation: card-flip 0.5s ease-in-out;
+}
+
+/* Winner highlight on cards */
+.card.winning-card {
+  box-shadow: 0 0 12px rgba(241, 196, 15, 0.8);
+  border-color: #f1c40f;
+}
+

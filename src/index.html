@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Poker Room</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/table.css" />
+  <link rel="stylesheet" href="./css/cards.css" />
+  <link rel="stylesheet" href="./css/actions.css" />
+</head>
+<body>
+  <!-- ============ LANDING PAGE ============ -->
+  <div id="view-landing" class="view">
+    <div class="landing">
+      <h1 class="logo">♠ Poker Room ♥</h1>
+      <p class="subtitle">No Limit Texas Hold'em &middot; $1/$2 Blinds &middot; 6 Players</p>
+
+      <div class="card-panel" id="panel-create">
+        <h2>Create a Table</h2>
+        <div class="form-group">
+          <label for="host-name">Your Name</label>
+          <input type="text" id="host-name" placeholder="Enter your name" maxlength="16" autocomplete="off" />
+        </div>
+        <button id="btn-create" class="btn btn-primary">Create Room</button>
+      </div>
+
+      <div class="divider"><span>or</span></div>
+
+      <div class="card-panel" id="panel-join">
+        <h2>Join a Table</h2>
+        <div class="form-group">
+          <label for="join-name">Your Name</label>
+          <input type="text" id="join-name" placeholder="Enter your name" maxlength="16" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="room-code">Room Code</label>
+          <input type="text" id="room-code" placeholder="Enter 6-character code" maxlength="6" autocomplete="off" />
+        </div>
+        <button id="btn-join" class="btn btn-secondary">Join Room</button>
+      </div>
+
+      <div id="status-message" class="status-message"></div>
+      <div id="loading-spinner" class="loading-spinner hidden">
+        <div class="spinner"></div>
+        <span>Connecting...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TABLE PAGE ============ -->
+  <div id="view-table" class="view hidden">
+    <!-- Top bar -->
+    <div class="top-bar">
+      <div class="room-info">
+        <span class="room-label">Room:</span>
+        <span id="room-code-display" class="room-code"></span>
+        <button id="btn-copy-code" class="btn-icon" title="Copy room code">📋</button>
+      </div>
+      <div class="blind-info">$1 / $2 NL Hold'em</div>
+      <button id="btn-leave" class="btn btn-danger btn-sm">Leave</button>
+    </div>
+
+    <!-- Poker table area -->
+    <div class="table-container">
+      <div class="poker-table">
+        <!-- Seats -->
+        <div class="seat seat-0" data-seat="0"></div>
+        <div class="seat seat-1" data-seat="1"></div>
+        <div class="seat seat-2" data-seat="2"></div>
+        <div class="seat seat-3" data-seat="3"></div>
+        <div class="seat seat-4" data-seat="4"></div>
+        <div class="seat seat-5" data-seat="5"></div>
+
+        <!-- Community cards -->
+        <div class="community-area">
+          <div id="pot-display" class="pot-display"></div>
+          <div id="community-cards" class="community-cards"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action bar -->
+    <div id="action-bar" class="action-bar hidden">
+      <div class="action-buttons">
+        <button id="btn-fold" class="btn btn-fold">Fold</button>
+        <button id="btn-check-call" class="btn btn-check-call">Check</button>
+        <div class="raise-controls">
+          <button id="btn-raise" class="btn btn-raise">Raise</button>
+          <div class="bet-slider-container">
+            <input type="range" id="bet-slider" min="0" max="100" value="0" />
+            <input type="number" id="bet-amount" class="bet-amount-input" min="0" />
+          </div>
+          <div class="preset-buttons">
+            <button class="btn btn-preset" data-preset="0.5">½ Pot</button>
+            <button class="btn btn-preset" data-preset="0.75">¾ Pot</button>
+            <button class="btn btn-preset" data-preset="1">Pot</button>
+            <button class="btn btn-preset" data-preset="all">All In</button>
+          </div>
+        </div>
+      </div>
+      <div id="action-timer" class="action-timer">
+        <div id="timer-bar" class="timer-bar"></div>
+      </div>
+    </div>
+
+    <!-- Deal / Start button for host -->
+    <div id="host-controls" class="host-controls hidden">
+      <button id="btn-deal" class="btn btn-primary btn-lg">Deal</button>
+    </div>
+
+    <!-- Chat -->
+    <div id="chat-panel" class="chat-panel">
+      <div id="chat-messages" class="chat-messages"></div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Chat..." maxlength="200" autocomplete="off" />
+        <button id="btn-chat-send" class="btn btn-sm">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./ui/app.ts"></script>
+</body>
+</html>
