@@ -118,8 +118,8 @@ export class GameEngine {
   startHand(): void {
     if (!this.canStartHand()) return;
 
-    // Clean up disconnected players with no chips between hands
-    this.state.players = this.state.players.filter(p => p.isConnected || p.chips > 0);
+    // Remove busted players (0 chips) and disconnected players between hands
+    this.state.players = this.state.players.filter(p => p.chips > 0 && p.isConnected);
 
     this.state.handInProgress = true;
     this.state.handNumber++;
@@ -488,23 +488,31 @@ export class GameEngine {
     const currentPlayer = this.getActivePlayer();
     if (!currentPlayer) return null;
 
-    const currentActiveIdx = activePlayers.indexOf(currentPlayer);
+    // Find the current player's position by seat order in the active list
+    let currentActiveIdx = activePlayers.indexOf(currentPlayer);
+    if (currentActiveIdx < 0) {
+      // Current player might have gone all-in (0 chips) but is still
+      // in activePlayers since getActivePlayers uses >= 0.
+      // Fall back to finding by seat position.
+      currentActiveIdx = activePlayers.findIndex(
+        p => p.seatIndex >= currentPlayer.seatIndex
+      );
+      if (currentActiveIdx < 0) currentActiveIdx = 0;
+    }
 
-    for (let i = 1; i < activePlayers.length; i++) {
+    for (let i = 1; i <= activePlayers.length; i++) {
       const idx = (currentActiveIdx + i) % activePlayers.length;
       const player = activePlayers[idx];
 
       if (player.hasFolded || player.isAllIn) continue;
 
       // Player can still act if:
-      // 1. They haven't acted yet (no lastAction) and betting round just started
-      // 2. Their bet is less than the current bet
-      // 3. In preflop, BB gets option if no raises
+      // 1. Their bet is less than the current bet
       if (player.currentBet < this.state.currentBet) {
         return player;
       }
 
-      // BB option in preflop
+      // 2. BB option in preflop (hasn't acted yet)
       if (this.state.bettingRound === 'preflop' && !player.lastAction) {
         return player;
       }
@@ -746,7 +754,7 @@ export class GameEngine {
     this.state.handInProgress = false;
     this.state.activePlayerIndex = -1;
 
-    // Remove busted players that are disconnected
+    // Remove disconnected players with no chips (they're gone)
     this.state.players = this.state.players.filter(
       p => p.isConnected || p.chips > 0
     );
@@ -761,7 +769,7 @@ export class GameEngine {
 
   private getActivePlayers(): Player[] {
     return this.state.players.filter(
-      p => !p.isSittingOut && p.chips > 0 && p.isConnected
+      p => !p.isSittingOut && p.chips >= 0 && p.isConnected
     );
   }
 

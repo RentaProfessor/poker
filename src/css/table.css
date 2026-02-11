@@ -372,6 +372,80 @@
   padding: 8px 12px;
 }
 
+/* ── Results Overlay ── */
+.results-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.88);
+  border-radius: 12px;
+  padding: 14px 18px;
+  z-index: 30;
+  min-width: 220px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.6);
+  animation: overlayFadeIn 0.3s ease-out;
+}
+
+.results-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f5a623;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+
+.result-row.winner {
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.3);
+}
+
+.result-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #fff;
+  min-width: 55px;
+}
+
+.result-cards {
+  display: flex;
+  gap: 3px;
+}
+
+.result-hand {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.result-win {
+  font-weight: 700;
+  color: #f5a623;
+  font-size: 0.9rem;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .poker-table {

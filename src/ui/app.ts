@@ -32,6 +32,7 @@ let currentPot = 0;
 let dealerSeat = -1;
 let activePlayerId = '';
 let handInProgress = false;
+let showdownResults: ShowdownResult[] | null = null;
 
 let actionBar: ActionBar | null = null;
 
@@ -211,6 +212,7 @@ function resetState(): void {
   dealerSeat = -1;
   activePlayerId = '';
   handInProgress = false;
+  showdownResults = null;
 }
 
 // ── Host Table ──
@@ -333,6 +335,7 @@ function handleGameMessage(msg: HostMessage): void {
       break;
 
     case 'hand_start':
+      showdownResults = null;
       handInProgress = true;
       dealerSeat = msg.dealerSeat;
       currentPlayers = msg.players;
@@ -340,6 +343,7 @@ function handleGameMessage(msg: HostMessage): void {
       myHoleCards = [];
       currentPot = 0;
       activePlayerId = '';
+      removeResultsOverlay();
       renderSeats();
       renderCommunityCards();
       renderPot();
@@ -367,7 +371,9 @@ function handleGameMessage(msg: HostMessage): void {
       renderSeats();
 
       if (msg.playerId === myId) {
-        actionBar!.show(msg.validActions, msg.pot, msg.currentBet, msg.timeDeadline);
+        // Use local time for the timer to avoid clock sync issues between host/peer
+        const localDeadline = Date.now() + 30000;
+        actionBar!.show(msg.validActions, msg.pot, msg.currentBet, localDeadline);
       } else {
         actionBar!.hide();
       }
@@ -409,15 +415,26 @@ function handleGameMessage(msg: HostMessage): void {
       activePlayerId = '';
       currentPlayers = msg.players;
       actionBar!.hide();
+      // Don't clear showdownResults yet — keep cards visible
       renderSeats();
       if (isHost) {
         updateDealButton();
-        // Auto-deal next hand after a short delay
+        // Auto-deal next hand after delay (gives time to see showdown)
         setTimeout(() => {
+          showdownResults = null;
+          removeResultsOverlay();
+          renderSeats();
           if (host?.canDeal()) {
             host.dealHand();
           }
-        }, 4000);
+        }, 5000);
+      } else {
+        // Peer: clear showdown after same delay
+        setTimeout(() => {
+          showdownResults = null;
+          removeResultsOverlay();
+          renderSeats();
+        }, 5000);
       }
       break;
 
@@ -432,6 +449,9 @@ function handleGameMessage(msg: HostMessage): void {
 }
 
 function handleShowdown(results: ShowdownResult[]): void {
+  showdownResults = results;
+
+  // Chat log
   for (const result of results) {
     const pName = getPlayerName(result.playerId);
     if (result.winAmount > 0) {
@@ -443,7 +463,12 @@ function handleShowdown(results: ShowdownResult[]): void {
       addChatMessage('', `${pName} shows: ${cardStr}`);
     }
   }
-  renderShowdownCards(results);
+
+  // Re-render seats to show hole cards
+  renderSeats();
+
+  // Show results overlay on the table
+  showResultsOverlay(results);
 }
 
 // ═══════════════════════════════════════
@@ -499,7 +524,15 @@ function renderSeats(): void {
 
     // Cards
     let cardsHtml = '';
-    if (handInProgress && !player.hasFolded) {
+    if (showdownResults) {
+      // During showdown, show revealed cards
+      const showdownEntry = showdownResults.find(r => r.playerId === player.id);
+      if (showdownEntry && showdownEntry.cards.length > 0) {
+        cardsHtml = `<div class="seat-cards">${showdownEntry.cards.map(c => cardHtml(c, 'sm')).join('')}</div>`;
+      } else if (isMe && myHoleCards.length === 2) {
+        cardsHtml = `<div class="seat-cards">${myHoleCards.map(c => cardHtml(c, 'sm')).join('')}</div>`;
+      }
+    } else if (handInProgress && !player.hasFolded) {
       if (isMe && myHoleCards.length === 2) {
         cardsHtml = `<div class="seat-cards">${myHoleCards.map(c => cardHtml(c, 'sm')).join('')}</div>`;
       } else if (!isMe) {
@@ -570,20 +603,42 @@ function getBadgeHtml(seatIndex: number): string {
   return '';
 }
 
-function renderShowdownCards(results: ShowdownResult[]): void {
-  for (const result of results) {
-    if (result.cards.length === 0) continue;
-    const player = currentPlayers.find(p => p.id === result.playerId);
-    if (!player || player.id === myId) continue;
+function showResultsOverlay(results: ShowdownResult[]): void {
+  removeResultsOverlay();
 
-    const seatEl = document.querySelector(`.seat-${player.seatIndex}`) as HTMLElement;
-    const cardsContainer = seatEl.querySelector('.seat-cards');
-    if (cardsContainer) {
-      cardsContainer.innerHTML = result.cards.map(c => cardHtml(c, 'sm')).join('');
+  const overlay = document.createElement('div');
+  overlay.id = 'results-overlay';
+  overlay.className = 'results-overlay';
+
+  let html = '<div class="results-title">Hand Results</div>';
+  for (const result of results) {
+    const pName = getPlayerName(result.playerId);
+    const isWinner = result.winAmount > 0;
+
+    let cardsStr = '';
+    if (result.cards.length > 0) {
+      cardsStr = result.cards.map(c => cardHtml(c, 'sm')).join('');
     }
+
+    let handName = '';
+    if (result.hand) {
+      handName = result.hand.name;
+    }
+
+    html += `
+      <div class="result-row ${isWinner ? 'winner' : ''}">
+        <span class="result-name">${esc(pName)}</span>
+        <div class="result-cards">${cardsStr}</div>
+        ${handName ? `<span class="result-hand">${handName}</span>` : ''}
+        ${isWinner ? `<span class="result-win">+$${result.winAmount}</span>` : ''}
+      </div>
+    `;
   }
 
-  // Highlight winners
+  overlay.innerHTML = html;
+  document.querySelector('.poker-table')!.appendChild(overlay);
+
+  // Highlight winner seats
   for (const result of results) {
     if (result.winAmount <= 0) continue;
     const player = currentPlayers.find(p => p.id === result.playerId);
@@ -592,19 +647,33 @@ function renderShowdownCards(results: ShowdownResult[]): void {
     const box = seatEl.querySelector('.seat-box');
     if (box) {
       box.classList.add('winner');
-      setTimeout(() => box.classList.remove('winner'), 4000);
     }
   }
+}
+
+function removeResultsOverlay(): void {
+  const existing = document.getElementById('results-overlay');
+  if (existing) existing.remove();
+  // Remove winner highlights from seats
+  document.querySelectorAll('.seat-box.winner').forEach(el => el.classList.remove('winner'));
 }
 
 // ── Community Cards ──
 function renderCommunityCards(): void {
   const container = document.getElementById('community-cards')!;
-  container.innerHTML = '';
-  for (let i = 0; i < communityCards.length; i++) {
+  const existingCount = container.children.length;
+
+  // If fewer cards than currently displayed (new hand), clear everything
+  if (communityCards.length < existingCount) {
+    container.innerHTML = '';
+    return;
+  }
+
+  // Only create and animate NEW cards (don't re-animate existing ones)
+  for (let i = existingCount; i < communityCards.length; i++) {
     const el = createCardElement(communityCards[i], 'lg');
     el.classList.add('dealing');
-    el.style.animationDelay = `${i * 0.1}s`;
+    el.style.animationDelay = `${(i - existingCount) * 0.1}s`;
     container.appendChild(el);
   }
 }

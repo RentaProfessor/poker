@@ -54,7 +54,9 @@ export class ActionBar {
       const amount = parseInt(this.betAmountInput.value);
       if (!isNaN(amount) && amount > 0) {
         this.onAction?.('raise', amount);
-        this.hide();
+        // Don't hide here — the game state update (action_on for next player)
+        // will hide/show the bar. This prevents the bar from disappearing
+        // if the raise fails validation in the engine.
       }
     });
 
